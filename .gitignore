@@ -11,3 +11,15 @@
 *.lai
 *.la
 *.a
+
+# Compiled Exectuable
+*.exe
+*.out
+
+# Image file and resources
+*.png
+*.jpg
+
+# Temp files
+*~
+
