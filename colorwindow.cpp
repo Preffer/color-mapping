@@ -2,6 +2,7 @@
 #include <boost/format.hpp>
 #include <unordered_map>
 #include "util.hpp"
+#include "colormap.hpp"
 #include "colorwindow.hpp"
 
 using namespace std;
