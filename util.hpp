@@ -37,6 +37,15 @@ ostream& operator<<(ostream& out, const vector<Material> l) {
 	return out;
 }
 
+namespace std {
+	template <>
+	struct hash<Vec3b> {
+		size_t operator()(const Vec3b& k) const {
+			return ((hash<uchar>()(k[0]) ^ (hash<uchar>()(k[1]) << 1)) >> 1) ^ (hash<uchar>()(k[2]) << 1);
+		}
+	};
+}
+
 Vec3i diffHSV2RGB(Vec3i src, Vec3i dest, Vec3i base) {
 	Mat srcRGB = Mat(Size(1, 1), CV_8UC3, Scalar(src));
 	Mat srcHSV;

@@ -1,5 +1,6 @@
 #include <iostream>
 #include <boost/format.hpp>
+#include <unordered_map>
 #include "util.hpp"
 #include "colorwindow.hpp"
 
@@ -102,6 +103,7 @@ void ColorWindow::readMaterial() {
 			for (Material& m : library) {
 				if (m.diffuseColor == diffuseColor) {
 					m.region.push_back(Point2i(x, y));
+					found = true;
 					break;
 				}
 			}
@@ -114,5 +116,20 @@ void ColorWindow::readMaterial() {
 		}
 	}
 
+	for (Material& m : library) {
+		unordered_map<Vec3b, int> billboard;
+
+		for (Point2i p : m.region) {
+			int index = p.y * width * 4 + p.x * 4;
+			Vec3b renderColor(srcRaw[index], srcRaw[index + 1], srcRaw[index + 2]);
+			if (billboard.find(renderColor) == billboard.end()) {
+				billboard.insert(pair<Vec3b, int>(renderColor, 1));
+			} else {
+				billboard[renderColor]++;
+			}
+		}
+	}
+
+	//cout << library.size() << endl;
 	//cout << library << endl;
 }
