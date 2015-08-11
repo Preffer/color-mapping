@@ -25,7 +25,7 @@ ostream& operator<<(ostream& out, const vector<Point2i>& r) {
 }
 
 ostream& operator<<(ostream& out, const Material& m) {
-	return out << boost::format("{diffuseColor: %1%, renderColor: %2%, region: %3%}") % m.diffuseColor % m.renderColor % m.region;
+	return out << boost::format("{diffuseColor: %1%, renderColor: %2%}") % m.diffuseColor % m.renderColor;
 }
 
 ostream& operator<<(ostream& out, const vector<Material> l) {
@@ -33,7 +33,7 @@ ostream& operator<<(ostream& out, const vector<Material> l) {
 	for (const Material& m : l) {
 		out << m << ", ";
 	}
-	out << "]" << endl;
+	out << "]";
 	return out;
 }
 
@@ -41,7 +41,7 @@ namespace std {
 	template <>
 	struct hash<Vec3b> {
 		size_t operator()(const Vec3b& k) const {
-			return ((hash<uchar>()(k[0]) ^ (hash<uchar>()(k[1]) << 1)) >> 1) ^ (hash<uchar>()(k[2]) << 1);
+			return hash<int>()(k[0] + (k[1] << 8) + (k[2] << 16));
 		}
 	};
 }

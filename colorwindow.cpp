@@ -122,14 +122,19 @@ void ColorWindow::readMaterial() {
 		for (Point2i p : m.region) {
 			int index = p.y * width * 4 + p.x * 4;
 			Vec3b renderColor(srcRaw[index], srcRaw[index + 1], srcRaw[index + 2]);
-			if (billboard.find(renderColor) == billboard.end()) {
-				billboard.insert(pair<Vec3b, int>(renderColor, 1));
-			} else {
-				billboard[renderColor]++;
+
+			// implicit zero init
+			billboard[renderColor]++;
+		}
+
+		Vec3b renderColor = billboard.begin()->first;
+		int max = billboard.begin()->second;
+		for (auto& s : billboard) {
+			if (s.second > max) {
+				renderColor = s.first;
+				max = s.second;
 			}
 		}
+		m.renderColor = renderColor;
 	}
-
-	//cout << library.size() << endl;
-	//cout << library << endl;
 }
