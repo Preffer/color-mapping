@@ -66,9 +66,9 @@ void ColorWindow::onDestColorSet() {
 
 	Vec3b src(255, 255, 255);
 	Vec3b dest(rgba.get_red() * COLOR_DEPTH, rgba.get_green() * COLOR_DEPTH, rgba.get_blue() * COLOR_DEPTH);
-	Vec3b base(174, 174, 174);
+	Vec3b refer(174, 174, 174);
 
-	Vec3i diffRGB = diffHSV2RGB(src, dest, base);
+	Vec3i diffRGB = diffHSV2RGB(src, dest, refer);
 	int width = srcPixbuf->get_width();
 	guint8* srcRaw = srcPixbuf->get_pixels();
 	guint8* destRaw = destPixbuf->get_pixels();
