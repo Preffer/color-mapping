@@ -7,6 +7,7 @@ using namespace std;
 using namespace boost;
 using namespace Gtk;
 using namespace Glib;
+using namespace cv;
 
 Window* ColorWindow::create() {
 	RefPtr<Builder> builder;
@@ -37,11 +38,15 @@ Window* ColorWindow::create() {
 
 /* Signal handler */
 void ColorWindow::onPreProcessButtonClick() {
-	cout << format("onPreProcessButtonClick: sceneFile => %1%, depthFile => %2%") % sceneFile->get_filename() % depthFile->get_filename() << endl;
+	cout << boost::format("onPreProcessButtonClick: sceneFile => %1%, depthFile => %2%") % sceneFile->get_filename() % depthFile->get_filename() << endl;
 
-	scene->set(sceneFile->get_filename());
-	destPixbuf = scene->get_pixbuf();
-	srcPixbuf = destPixbuf->copy();
+	// ensure alpha and always rgba
+	srcPixbuf = Gdk::Pixbuf::create_from_file(sceneFile->get_filename())->add_alpha(false, 255, 255, 255);
+	destPixbuf = srcPixbuf->copy();
+	depthPixbuf = Gdk::Pixbuf::create_from_file(depthFile->get_filename())->add_alpha(false, 255, 255, 255);
+	scene->set(destPixbuf);
+
+	readMaterial();
 }
 
 void ColorWindow::onReferColorSet() {
@@ -54,4 +59,56 @@ void ColorWindow::onSrcColorSet() {
 
 void ColorWindow::onDestColorSet() {
 	cout << "onDestColorSet: " << destColor->get_rgba() << endl;
+
+	Gdk::RGBA rgba = destColor->get_rgba();
+
+	Vec3i src(255, 255, 255);
+	Vec3i dest(rgba.get_red() * COLOR_DEPTH, rgba.get_green() * COLOR_DEPTH, rgba.get_blue() * COLOR_DEPTH);
+	Vec3i base(174, 174, 174);
+
+	Vec3i diff = diffHSVToRGB(src, dest, base);
+
+	int width = depthPixbuf->get_width();
+
+	guint8* srcRaw = srcPixbuf->get_pixels();
+	guint8* destRaw = destPixbuf->get_pixels();
+
+	//int pixelCount = destPixbuf->get_width() * destPixbuf->get_height();
+	//for (int i = 0; i < pixelCount * 4; i += 4) {
+	for (Point2i& point : material.second) {
+		int i = point.y * width * 4 + point.x * 4;
+
+		int newR = int(srcRaw[i    ]) + diff[0];
+		int newG = int(srcRaw[i + 1]) + diff[1];
+		int newB = int(srcRaw[i + 2]) + diff[2];
+		if (newR > 255) newR = 255;
+		if (newR <   0) newR = 0;
+		if (newG > 255) newG = 255;
+		if (newG <   0) newG = 0;
+		if (newB > 255) newB = 255;
+		if (newB <   0) newB = 0;
+
+		destRaw[i    ] = (guint8)(newR);
+		destRaw[i + 1] = (guint8)(newG);
+		destRaw[i + 2] = (guint8)(newB);
+	}
+
+	scene->set(destPixbuf);
+}
+
+void ColorWindow::readMaterial() {
+	material.first = Vec3b(255, 255, 255);
+	guint8* raw = depthPixbuf->get_pixels();
+
+	int width = depthPixbuf->get_width();
+	int height = depthPixbuf->get_height();
+
+	for (int y = 0; y < height; y++) {
+		for (int x = 0; x < width; x++) {
+			int index = y * width * 4 + x * 4;
+			if (raw[index++] == 255 && raw[index++] == 255 && raw[index] == 255) {
+				material.second.push_back(Point2i(x, y));
+			}
+		}
+	}
 }

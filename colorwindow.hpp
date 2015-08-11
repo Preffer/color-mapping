@@ -8,37 +8,47 @@
 #include <gtkmm/colorbutton.h>
 #include <gtkmm/filechooserbutton.h>
 #include <glibmm/fileutils.h>
+#include <opencv2/imgproc/imgproc.hpp>
 
 using namespace std;
 using namespace Gtk;
 using namespace Glib;
+using namespace cv;
+
+// diffuseColor -> point set
+typedef pair<Vec3b, vector<Point2i> > Material;
 
 static string ui_file = "colorwindow.glade";
 
 class ColorWindow {
-	public:
-		Window* create();
+public:
+	Window* create();
 
-	protected:
-		//Signal handlers
-		void onPreProcessButtonClick();
-		void onReferColorSet();
-		void onSrcColorSet();
-		void onDestColorSet();
+private:
+	//Signal handlers
+	void onPreProcessButtonClick();
+	void onReferColorSet();
+	void onSrcColorSet();
+	void onDestColorSet();
 
-		//Widget pointer in the UI file
-		Window* mainWindow = NULL;
-		Image* scene = NULL;
-		FileChooserButton* sceneFile = NULL;
-		FileChooserButton* depthFile = NULL;
-		Button* preProcessButton = NULL;
-		ColorButton* referColor = NULL;
-		ColorButton* srcColor = NULL;
-		ColorButton* destColor = NULL;
+	//Widget pointer in the UI file
+	Window* mainWindow = NULL;
+	Image* scene = NULL;
+	FileChooserButton* sceneFile = NULL;
+	FileChooserButton* depthFile = NULL;
+	Button* preProcessButton = NULL;
+	ColorButton* referColor = NULL;
+	ColorButton* srcColor = NULL;
+	ColorButton* destColor = NULL;
 
-		//Data section
-		RefPtr<Gdk::Pixbuf> srcPixbuf;
-		RefPtr<Gdk::Pixbuf> destPixbuf;
+	//Data section
+	RefPtr<Gdk::Pixbuf> srcPixbuf;
+	RefPtr<Gdk::Pixbuf> destPixbuf;
+	RefPtr<Gdk::Pixbuf> depthPixbuf;
+
+	// material
+	Material material;
+	void readMaterial();
 };
 
 #endif // _COLORWINDOW_H_
