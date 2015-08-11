@@ -64,11 +64,11 @@ void ColorWindow::onDestColorSet() {
 
 	/*Gdk::RGBA rgba = destColor->get_rgba();
 
-	Vec3i src(255, 255, 255);
-	Vec3i dest(rgba.get_red() * COLOR_DEPTH, rgba.get_green() * COLOR_DEPTH, rgba.get_blue() * COLOR_DEPTH);
-	Vec3i base(174, 174, 174);
+	Vec3b src(255, 255, 255);
+	Vec3b dest(rgba.get_red() * COLOR_DEPTH, rgba.get_green() * COLOR_DEPTH, rgba.get_blue() * COLOR_DEPTH);
+	Vec3b base(174, 174, 174);
 
-	Vec3i diff = diffHSV2RGB(src, dest, base);
+	Vec3i diffRGB = diffHSV2RGB(src, dest, base);
 	int width = srcPixbuf->get_width();
 	guint8* srcRaw = srcPixbuf->get_pixels();
 	guint8* destRaw = destPixbuf->get_pixels();
