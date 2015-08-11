@@ -38,12 +38,8 @@ Vec3i diffHSVToRGB(Vec3i src, Vec3i dest, Vec3i base) {
 	int newV = int(baseHSV.at<Vec3b>(0, 0)[2]) + diffV;
 	if (newH > 180) newH -= 180;
 	if (newH <   0) newH += 180;
-	if (newS > 255) newS = 255;
-	if (newS <   0) newS = 0;
-	if (newV > 255) newV = 255;
-	if (newV <   0) newV = 0;
 
-	Mat afterHSV = Mat(Size(1, 1), CV_8UC3, Scalar(newH, newS, newV));
+	Mat afterHSV = Mat(Size(1, 1), CV_8UC3, Scalar(newH, saturate_cast<uchar>(newS), saturate_cast<uchar>(newV)));
 	Mat afterRGB;
 	cvtColor(afterHSV, afterRGB, CV_HSV2RGB);
 

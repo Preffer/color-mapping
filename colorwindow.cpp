@@ -73,24 +73,16 @@ void ColorWindow::onDestColorSet() {
 	guint8* srcRaw = srcPixbuf->get_pixels();
 	guint8* destRaw = destPixbuf->get_pixels();
 
-	//int pixelCount = destPixbuf->get_width() * destPixbuf->get_height();
-	//for (int i = 0; i < pixelCount * 4; i += 4) {
 	for (Point2i& point : material.second) {
 		int i = point.y * width * 4 + point.x * 4;
 
 		int newR = int(srcRaw[i    ]) + diff[0];
 		int newG = int(srcRaw[i + 1]) + diff[1];
 		int newB = int(srcRaw[i + 2]) + diff[2];
-		if (newR > 255) newR = 255;
-		if (newR <   0) newR = 0;
-		if (newG > 255) newG = 255;
-		if (newG <   0) newG = 0;
-		if (newB > 255) newB = 255;
-		if (newB <   0) newB = 0;
 
-		destRaw[i    ] = (guint8)(newR);
-		destRaw[i + 1] = (guint8)(newG);
-		destRaw[i + 2] = (guint8)(newB);
+		destRaw[i    ] = saturate_cast<uchar>(newR);
+		destRaw[i + 1] = saturate_cast<uchar>(newG);
+		destRaw[i + 2] = saturate_cast<uchar>(newB);
 	}
 
 	scene->set(destPixbuf);
