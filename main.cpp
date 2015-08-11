@@ -1,4 +1,4 @@
-#include "colorwindow.h"
+#include "colorwindow.hpp"
 
 using namespace std;
 using namespace Gtk;
