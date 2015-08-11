@@ -60,7 +60,7 @@ void ColorWindow::onSrcColorSet() {
 void ColorWindow::onDestColorSet() {
 	cout << "onDestColorSet: " << destColor->get_rgba() << endl;
 
-	Gdk::RGBA rgba = destColor->get_rgba();
+	/*Gdk::RGBA rgba = destColor->get_rgba();
 
 	Vec3i src(255, 255, 255);
 	Vec3i dest(rgba.get_red() * COLOR_DEPTH, rgba.get_green() * COLOR_DEPTH, rgba.get_blue() * COLOR_DEPTH);
@@ -83,22 +83,36 @@ void ColorWindow::onDestColorSet() {
 		destRaw[i + 2] = saturate_cast<uchar>(newB);
 	}
 
-	scene->set(destPixbuf);
+	scene->set(destPixbuf);*/
 }
 
 void ColorWindow::readMaterial() {
-	material.first = Vec3b(255, 255, 255);
-	guint8* raw = depthPixbuf->get_pixels();
+	guint8* depthRaw = depthPixbuf->get_pixels();
+	guint8* srcRaw = srcPixbuf->get_pixels();
 
-	int width = depthPixbuf->get_width();
-	int height = depthPixbuf->get_height();
+	int width = destPixbuf->get_width();
+	int height = destPixbuf->get_height();
 
 	for (int y = 0; y < height; y++) {
 		for (int x = 0; x < width; x++) {
 			int index = y * width * 4 + x * 4;
-			if (raw[index++] == 255 && raw[index++] == 255 && raw[index] == 255) {
-				material.second.push_back(Point2i(x, y));
+			Vec3b diffuseColor(depthRaw[index], depthRaw[index + 1], depthRaw[index + 2]);
+
+			bool found = false;
+			for (Material& m : library) {
+				if (m.diffuseColor == diffuseColor) {
+					m.region.push_back(Point2i(x, y));
+					break;
+				}
+			}
+
+			if (!found) {
+				Material m(diffuseColor);
+				m.region.push_back(Point2i(x, y));
+				library.push_back(m);
 			}
 		}
 	}
+
+	//cout << library << endl;
 }

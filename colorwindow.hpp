@@ -9,14 +9,12 @@
 #include <gtkmm/filechooserbutton.h>
 #include <glibmm/fileutils.h>
 #include <opencv2/imgproc/imgproc.hpp>
+#include "material.hpp"
 
 using namespace std;
 using namespace Gtk;
 using namespace Glib;
 using namespace cv;
-
-// diffuseColor -> point set
-typedef pair<Vec3b, vector<Point2i> > Material;
 
 static string ui_file = "colorwindow.glade";
 
@@ -47,8 +45,8 @@ private:
 	RefPtr<Gdk::Pixbuf> depthPixbuf;
 
 	// material
-	Material material;
+	vector<Material> library;
 	void readMaterial();
 };
 
-#endif // _COLORWINDOW_H_
+#endif // _COLORWINDOW_HPP_
