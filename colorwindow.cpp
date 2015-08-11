@@ -22,14 +22,21 @@ Window* ColorWindow::create() {
 	}
 
 	builder->get_widget("mainWindow", mainWindow);
+	builder->get_widget("sceneEventBox", sceneEventBox);
 	builder->get_widget("scene", scene);
 	builder->get_widget("sceneFile", sceneFile);
 	builder->get_widget("depthFile", depthFile);
 	builder->get_widget("preProcessButton", preProcessButton);
+	builder->get_widget("pickMaterialButton", pickMaterialButton);
 	builder->get_widget("referColor", referColor);
 	builder->get_widget("srcColor",   srcColor);
 	builder->get_widget("destColor",  destColor);
+	builder->get_widget("originButton",  originButton);
+	builder->get_widget("saveButton",  saveButton);
 
+	sceneEventBox->signal_button_press_event().connect(sigc::mem_fun(*this, &ColorWindow::onScenePress));
+	sceneEventBox->signal_button_release_event().connect(sigc::mem_fun(*this, &ColorWindow::onSceneRelease));
+	sceneEventBox->signal_motion_notify_event().connect(sigc::mem_fun(*this, &ColorWindow::onSceneMotion));
 	preProcessButton->signal_clicked().connect(sigc::mem_fun(*this, &ColorWindow::onPreProcessButtonClick));
 	referColor->signal_color_set().connect(sigc::mem_fun(*this, &ColorWindow::onReferColorSet));
 	srcColor->signal_color_set().connect(sigc::mem_fun(*this, &ColorWindow::onSrcColorSet));
@@ -39,6 +46,21 @@ Window* ColorWindow::create() {
 }
 
 /* Signal handler */
+bool ColorWindow::onScenePress(GdkEventButton* event) {
+	cout << boost::format("Press: (%1%, %2%)") % event->x % event->y << endl;
+	return false;
+}
+
+bool ColorWindow::onSceneRelease(GdkEventButton* event) {
+	cout << boost::format("Release: (%1%, %2%)") % event->x % event->y << endl;
+	return false;
+}
+
+bool ColorWindow::onSceneMotion(GdkEventMotion* event) {
+	cout << boost::format("Motion: (%1%, %2%)") % event->x % event->y << endl;
+	return false;
+}
+
 void ColorWindow::onPreProcessButtonClick() {
 	cout << boost::format("onPreProcessButtonClick: sceneFile => %1%, depthFile => %2%") % sceneFile->get_filename() % depthFile->get_filename() << endl;
 
@@ -120,7 +142,7 @@ void ColorWindow::readMaterial() {
 	for (Material& m : library) {
 		unordered_map<Vec3b, int> billboard;
 
-		for (Point2i p : m.region) {
+		for (Point2i& p : m.region) {
 			int index = p.y * width * 4 + p.x * 4;
 			Vec3b renderColor(srcRaw[index], srcRaw[index + 1], srcRaw[index + 2]);
 

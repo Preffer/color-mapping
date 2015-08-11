@@ -2,7 +2,7 @@
 <!-- Generated with glade 3.18.3 -->
 <interface>
   <requires lib="gtk+" version="3.12"/>
-  <object class="GtkImage" id="originalIcon">
+  <object class="GtkImage" id="originIcon">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
     <property name="stock">gtk-leave-fullscreen</property>
@@ -25,12 +25,19 @@
         <property name="visible">True</property>
         <property name="can_focus">False</property>
         <child>
-          <object class="GtkImage" id="scene">
-            <property name="width_request">200</property>
-            <property name="height_request">150</property>
+          <object class="GtkEventBox" id="sceneEventBox">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
-            <property name="stock">gtk-missing-image</property>
+            <property name="events">GDK_POINTER_MOTION_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK | GDK_STRUCTURE_MASK</property>
+            <child>
+              <object class="GtkImage" id="scene">
+                <property name="width_request">200</property>
+                <property name="height_request">150</property>
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="stock">gtk-missing-image</property>
+              </object>
+            </child>
           </object>
           <packing>
             <property name="expand">True</property>
@@ -133,7 +140,7 @@
               </packing>
             </child>
             <child>
-              <object class="GtkButton" id="pickMaterialButton">
+              <object class="GtkToggleButton" id="pickMaterialButton">
                 <property name="label" translatable="yes">PickMaterial</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
@@ -261,12 +268,12 @@
                 <property name="can_focus">False</property>
                 <property name="spacing">5</property>
                 <child>
-                  <object class="GtkToggleButton" id="originalButton">
-                    <property name="label" translatable="yes">Original</property>
+                  <object class="GtkToggleButton" id="originButton">
+                    <property name="label" translatable="yes">Origin</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
-                    <property name="image">originalIcon</property>
+                    <property name="image">originIcon</property>
                     <property name="always_show_image">True</property>
                   </object>
                   <packing>

@@ -5,7 +5,9 @@
 #include <gtkmm/builder.h>
 #include <gtkmm/image.h>
 #include <gtkmm/label.h>
+#include <gtkmm/eventbox.h>
 #include <gtkmm/colorbutton.h>
+#include <gtkmm/togglebutton.h>
 #include <gtkmm/filechooserbutton.h>
 #include <glibmm/fileutils.h>
 #include <opencv2/imgproc/imgproc.hpp>
@@ -18,12 +20,21 @@ using namespace cv;
 
 static string ui_file = "colorwindow.glade";
 
+enum PickStatus {
+	ignore,
+	awake,
+	press
+};
+
 class ColorWindow {
 public:
 	Window* create();
 
 private:
 	//Signal handlers
+	bool onScenePress(GdkEventButton* event);
+	bool onSceneRelease(GdkEventButton* event);
+	bool onSceneMotion(GdkEventMotion* event);
 	void onPreProcessButtonClick();
 	void onReferColorSet();
 	void onSrcColorSet();
@@ -31,22 +42,29 @@ private:
 
 	//Widget pointer in the UI file
 	Window* mainWindow = NULL;
+	EventBox* sceneEventBox = NULL;
 	Image* scene = NULL;
 	FileChooserButton* sceneFile = NULL;
 	FileChooserButton* depthFile = NULL;
 	Button* preProcessButton = NULL;
+	ToggleButton* pickMaterialButton = NULL;
 	ColorButton* referColor = NULL;
 	ColorButton* srcColor = NULL;
 	ColorButton* destColor = NULL;
+	ToggleButton* originButton = NULL;
+	Button* saveButton = NULL;
 
 	//Data section
 	RefPtr<Gdk::Pixbuf> srcPixbuf;
 	RefPtr<Gdk::Pixbuf> destPixbuf;
 	RefPtr<Gdk::Pixbuf> depthPixbuf;
 
-	// material
+	// material related
 	vector<Material> library;
 	void readMaterial();
+
+	// pick status
+	PickStatus pick;
 };
 
 #endif // _COLORWINDOW_HPP_
