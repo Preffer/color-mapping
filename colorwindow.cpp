@@ -203,5 +203,13 @@ void ColorWindow::readMaterial() {
 			}
 		}
 		m.renderColor = renderColor;
+
+		Vec3b diffuseColorHSV = RGB2HSV(m.diffuseColor);
+		Vec3b renderColorHSV = RGB2HSV(m.renderColor);
+
+		if (int(diffuseColorHSV[1]) == 0) {
+			renderColorHSV[0] = guint8(0);
+			m.renderColor = HSV2RGB(renderColorHSV);
+		}
 	}
 }
