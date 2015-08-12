@@ -49,41 +49,48 @@ Window* ColorWindow::create() {
 
 /* Signal handler */
 bool ColorWindow::onScenePress(GdkEventButton* event) {
-	Point2i pos(event->x - border.x, event->y - border.y);
-	cout << boost::format("Press: %1%") % pos << endl;
-
-	guint8* depthRaw = depthPixbuf->get_pixels();
-
-	int index = pos.y * depthPixbuf->get_width() * 4 + pos.x * 4;
-	Vec3b diffuseColor(depthRaw[index], depthRaw[index + 1], depthRaw[index + 2]);
-
-	if (pos.x < srcPixbuf->get_width() && pos.y < srcPixbuf->get_height()) {
-		for (Material& m : library) {
-			if (diffuseColor == m.diffuseColor) {
-				material = &m;
-				break;
-			}
-		}
-		Gdk::RGBA diffuseRGBA;
-		diffuseRGBA.set_rgba_u(int(material->diffuseColor[0]) * COLOR_DEPTH, int(material->diffuseColor[1]) * COLOR_DEPTH, int(material->diffuseColor[2]) * COLOR_DEPTH);
-		srcColor->set_rgba(diffuseRGBA);
-
-		Gdk::RGBA renderRGBA;
-		renderRGBA.set_rgba_u(int(material->renderColor[0]) * COLOR_DEPTH, int(material->renderColor[1]) * COLOR_DEPTH, int(material->renderColor[2]) * COLOR_DEPTH);
-		referColor->set_rgba(renderRGBA);
-
-		cout << boost::format("srcColor: %1%, referColor: %2%") % material->diffuseColor % material->renderColor << endl;
+	if (pick == PickStatus::awake) {
+		pick = PickStatus::press;
 	}
 	return false;
 }
 
 bool ColorWindow::onSceneRelease(GdkEventButton* event) {
-	//cout << boost::format("Release: (%1%, %2%)") % event->x % event->y << endl;
+	pick = PickStatus::sleep;
+	pickMaterialButton->set_active(false);
+	sceneEventBox->get_window()->set_cursor();
 	return false;
 }
 
 bool ColorWindow::onSceneMotion(GdkEventMotion* event) {
-	//cout << boost::format("Motion: (%1%, %2%)") % event->x % event->y << endl;
+	if (pick == PickStatus::press) {
+		Point2i point(event->x - border.x, event->y - border.y);
+
+		int width = depthPixbuf->get_width();
+		int height = depthPixbuf->get_height();
+
+		if (point.x < width && point.y < height) {
+			int channel = depthPixbuf->get_n_channels();
+			int index = point.y * depthPixbuf->get_width() * channel + point.x * channel;
+			guint8* depthRaw = depthPixbuf->get_pixels();
+			Vec3b diffuseColor(depthRaw[index], depthRaw[index + 1], depthRaw[index + 2]);
+
+			for (Material& m : library) {
+				if (diffuseColor == m.diffuseColor) {
+					material = &m;
+					break;
+				}
+			}
+
+			Gdk::RGBA diffuseRGBA;
+			diffuseRGBA.set_rgba_u(material->diffuseColor[0] << 8, material->diffuseColor[1] << 8, material->diffuseColor[2] << 8);
+			srcColor->set_rgba(diffuseRGBA);
+
+			Gdk::RGBA renderRGBA;
+			renderRGBA.set_rgba_u(material->renderColor[0] << 8, material->renderColor[1] << 8, material->renderColor[2] << 8);
+			referColor->set_rgba(renderRGBA);
+		}
+	}
 	return false;
 }
 
@@ -115,8 +122,10 @@ void ColorWindow::onPreProcessButtonClick() {
 void ColorWindow::onPickMaterialButtonToggle() {
 	if (pickMaterialButton->get_active()) {
 		pick = PickStatus::awake;
+		sceneEventBox->get_window()->set_cursor(Gdk::Cursor::create(Gdk::CursorType::CROSS));
 	} else {
 		pick = PickStatus::sleep;
+		sceneEventBox->get_window()->set_cursor();
 	}
 }
 
@@ -129,8 +138,6 @@ void ColorWindow::onColorSet() {
 	Vec3b srcRGB(srcRGBA.get_red() * COLOR_DEPTH, srcRGBA.get_green() * COLOR_DEPTH, srcRGBA.get_blue() * COLOR_DEPTH);
 	Vec3b destRGB(destRGBA.get_red() * COLOR_DEPTH, destRGBA.get_green() * COLOR_DEPTH, destRGBA.get_blue() * COLOR_DEPTH);
 
-	cout << boost::format("referColor: %1%, srcColor: %2%, destColor: %3%") % referRGB % srcRGB % destRGB << endl;
-
 	Vec3i diffRGB = diffHSV2RGB(referRGB, srcRGB, destRGB);
 	applyDiffRGB(srcPixbuf, destPixbuf, material->region, diffRGB);
 
@@ -138,15 +145,16 @@ void ColorWindow::onColorSet() {
 }
 
 void ColorWindow::readMaterial() {
-	guint8* depthRaw = depthPixbuf->get_pixels();
 	guint8* srcRaw = srcPixbuf->get_pixels();
+	guint8* depthRaw = depthPixbuf->get_pixels();
 
-	int width = destPixbuf->get_width();
-	int height = destPixbuf->get_height();
+	int width = depthPixbuf->get_width();
+	int height = depthPixbuf->get_height();
+	int channel = depthPixbuf->get_n_channels();
 
 	for (int y = 0; y < height; y++) {
 		for (int x = 0; x < width; x++) {
-			int index = y * width * 4 + x * 4;
+			int index = y * width * channel + x * channel;
 			Vec3b diffuseColor(depthRaw[index], depthRaw[index + 1], depthRaw[index + 2]);
 
 			bool found = false;
@@ -170,10 +178,10 @@ void ColorWindow::readMaterial() {
 		unordered_map<Vec3b, int> billboard;
 
 		for (Point2i& p : m.region) {
-			int index = p.y * width * 4 + p.x * 4;
+			int index = p.y * width * channel + p.x * channel;
 			Vec3b renderColor(srcRaw[index], srcRaw[index + 1], srcRaw[index + 2]);
 
-			// implicit zero init
+			// assume zero init
 			billboard[renderColor]++;
 		}
 
@@ -190,8 +198,9 @@ void ColorWindow::readMaterial() {
 		Vec3b diffuseColorHSV = RGB2HSV(m.diffuseColor);
 		Vec3b renderColorHSV = RGB2HSV(m.renderColor);
 
-		if (int(diffuseColorHSV[1]) == 0) {
-			renderColorHSV[0] = guint8(0);
+		// low saturation hue sanitize
+		if (diffuseColorHSV[1] == 0) {
+			renderColorHSV[0] = 0;
 			m.renderColor = HSV2RGB(renderColorHSV);
 		}
 	}

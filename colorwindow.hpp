@@ -40,6 +40,7 @@ private:
 	void onPreProcessButtonClick();
 	void onPickMaterialButtonToggle();
 	void onColorSet();
+	void readMaterial();
 
 	//Widget pointer in the UI file
 	Window* mainWindow = NULL;
@@ -63,7 +64,6 @@ private:
 	// material related
 	vector<Material> library;
 	Material* material;
-	void readMaterial();
 
 	// pick status
 	PickStatus pick;

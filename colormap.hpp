@@ -42,11 +42,12 @@ Vec3i diffHSV2RGB(Vec3b referRGB, Vec3b srcRGB, Vec3b destRGB) {
 
 void applyDiffRGB(RefPtr<Gdk::Pixbuf> srcPixbuf, RefPtr<Gdk::Pixbuf> destPixbuf, vector<Point2i>& region, Vec3i diffRGB) {
 	int width = srcPixbuf->get_width();
+	int channel = srcPixbuf->get_n_channels();
 	guint8* srcRaw = srcPixbuf->get_pixels();
 	guint8* destRaw = destPixbuf->get_pixels();
 
-	for (Point2i& point : region) {
-		int i = point.y * width * 4 + point.x * 4;
+	for (Point2i& p : region) {
+		int i = p.y * width * channel + p.x * channel;
 
 		int newR = int(srcRaw[i    ]) + diffRGB[0];
 		int newG = int(srcRaw[i + 1]) + diffRGB[1];
