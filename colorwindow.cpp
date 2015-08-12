@@ -82,13 +82,19 @@ bool ColorWindow::onSceneMotion(GdkEventMotion* event) {
 				}
 			}
 
-			Gdk::RGBA diffuseRGBA;
-			diffuseRGBA.set_rgba_u(material->diffuseColor[0] << 8, material->diffuseColor[1] << 8, material->diffuseColor[2] << 8);
-			srcColor->set_rgba(diffuseRGBA);
+			if (material != NULL) {
+				Gdk::RGBA diffuseRGBA;
+				diffuseRGBA.set_rgba_u(material->diffuseColor[0] << 8, material->diffuseColor[1] << 8, material->diffuseColor[2] << 8);
+				srcColor->set_rgba(diffuseRGBA);
 
-			Gdk::RGBA renderRGBA;
-			renderRGBA.set_rgba_u(material->renderColor[0] << 8, material->renderColor[1] << 8, material->renderColor[2] << 8);
-			referColor->set_rgba(renderRGBA);
+				Gdk::RGBA renderRGBA;
+				renderRGBA.set_rgba_u(material->renderColor[0] << 8, material->renderColor[1] << 8, material->renderColor[2] << 8);
+				referColor->set_rgba(renderRGBA);
+			} else {
+				MessageDialog dialog(*mainWindow, "Material pointer is NULL", false, MESSAGE_ERROR);
+				dialog.set_secondary_text("Material pointer is NULL");
+				dialog.run();
+			}
 		}
 	}
 	return false;
@@ -106,6 +112,21 @@ void ColorWindow::onPreProcessButtonClick() {
 		srcPixbuf = Gdk::Pixbuf::create_from_file(sceneFile->get_filename())->add_alpha(false, 255, 255, 255);
 		destPixbuf = srcPixbuf->copy();
 		depthPixbuf = Gdk::Pixbuf::create_from_file(depthFile->get_filename())->add_alpha(false, 255, 255, 255);
+
+		if (srcPixbuf->get_width() != depthPixbuf->get_width() || srcPixbuf->get_height() != depthPixbuf->get_height()) {
+			MessageDialog dialog(*mainWindow, "Image size dismatch", false, MESSAGE_ERROR);
+			dialog.set_secondary_text("Image size dismatch");
+			dialog.run();
+			return;
+		}
+
+		if (srcPixbuf->get_n_channels() != depthPixbuf->get_n_channels()) {
+			MessageDialog dialog(*mainWindow, "Image channel dismatch", false, MESSAGE_ERROR);
+			dialog.set_secondary_text("Image channel dismatch");
+			dialog.run();
+			return;
+		}
+
 		scene->set(destPixbuf);
 		readMaterial();
 	} catch (const FileError& e) {
@@ -121,8 +142,16 @@ void ColorWindow::onPreProcessButtonClick() {
 
 void ColorWindow::onPickMaterialButtonToggle() {
 	if (pickMaterialButton->get_active()) {
-		pick = PickStatus::awake;
-		sceneEventBox->get_window()->set_cursor(Gdk::Cursor::create(Gdk::CursorType::CROSS));
+		if (srcPixbuf) {
+			pick = PickStatus::awake;
+			sceneEventBox->get_window()->set_cursor(Gdk::Cursor::create(Gdk::CursorType::CROSS));
+		} else {
+			MessageDialog dialog(*mainWindow, "PreProcess image first", false, MESSAGE_ERROR);
+			dialog.set_secondary_text("PreProcess image first");
+			dialog.run();
+			pickMaterialButton->set_active(false);
+		}
+
 	} else {
 		pick = PickStatus::sleep;
 		sceneEventBox->get_window()->set_cursor();
@@ -130,6 +159,20 @@ void ColorWindow::onPickMaterialButtonToggle() {
 }
 
 void ColorWindow::onColorSet() {
+	if (!srcPixbuf) {
+		MessageDialog dialog(*mainWindow, "PreProcess image first", false, MESSAGE_ERROR);
+		dialog.set_secondary_text("PreProcess image first");
+		dialog.run();
+		return;
+	}
+
+	if (material == NULL) {
+		MessageDialog dialog(*mainWindow, "Select material first", false, MESSAGE_ERROR);
+		dialog.set_secondary_text("Select material first");
+		dialog.run();
+		return;
+	}
+
 	Gdk::RGBA referRGBA = referColor->get_rgba();
 	Gdk::RGBA srcRGBA = srcColor->get_rgba();
 	Gdk::RGBA destRGBA = destColor->get_rgba();

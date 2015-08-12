@@ -63,7 +63,7 @@ private:
 
 	// material related
 	vector<Material> library;
-	Material* material;
+	Material* material = NULL;
 
 	// pick status
 	PickStatus pick;
