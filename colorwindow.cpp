@@ -109,20 +109,13 @@ void ColorWindow::onSceneSizeAllocate(Allocation& allocation) {
 
 void ColorWindow::onPreProcessButtonClick() {
 	try {
-		srcPixbuf = Gdk::Pixbuf::create_from_file(sceneFile->get_filename())->add_alpha(false, 255, 255, 255);
+		srcPixbuf = Gdk::Pixbuf::create_from_file(sceneFile->get_filename());
 		destPixbuf = srcPixbuf->copy();
-		depthPixbuf = Gdk::Pixbuf::create_from_file(depthFile->get_filename())->add_alpha(false, 255, 255, 255);
+		depthPixbuf = Gdk::Pixbuf::create_from_file(depthFile->get_filename());
 
 		if (srcPixbuf->get_width() != depthPixbuf->get_width() || srcPixbuf->get_height() != depthPixbuf->get_height()) {
 			MessageDialog dialog(*mainWindow, "Image size dismatch", false, MESSAGE_ERROR);
 			dialog.set_secondary_text("Image size dismatch");
-			dialog.run();
-			return;
-		}
-
-		if (srcPixbuf->get_n_channels() != depthPixbuf->get_n_channels()) {
-			MessageDialog dialog(*mainWindow, "Image channel dismatch", false, MESSAGE_ERROR);
-			dialog.set_secondary_text("Image channel dismatch");
 			dialog.run();
 			return;
 		}
@@ -167,8 +160,8 @@ void ColorWindow::onColorSet() {
 	}
 
 	if (material == NULL) {
-		MessageDialog dialog(*mainWindow, "Select material first", false, MESSAGE_ERROR);
-		dialog.set_secondary_text("Select material first");
+		MessageDialog dialog(*mainWindow, "Pick material first", false, MESSAGE_ERROR);
+		dialog.set_secondary_text("Pick material first");
 		dialog.run();
 		return;
 	}
@@ -217,6 +210,7 @@ void ColorWindow::readMaterial() {
 		}
 	}
 
+	channel = srcPixbuf->get_n_channels();
 	for (Material& m : library) {
 		unordered_map<Vec3b, int> billboard;
 

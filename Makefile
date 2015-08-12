@@ -1,5 +1,5 @@
 CC			= g++
-CPPFLAGS	= -std=c++11 -Wall `pkg-config --cflags gtkmm-3.0 opencv`
+CPPFLAGS	= -std=c++11 -march=native -Wall -O2 `pkg-config --cflags gtkmm-3.0 opencv`
 LDFLAGS		= `pkg-config --libs gtkmm-3.0 opencv`
 SRCS		= main.cpp colorwindow.cpp
 OBJS		= $(SRCS:.cpp=.o)
