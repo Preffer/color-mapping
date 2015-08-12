@@ -1,17 +1,17 @@
 CC			= g++
-CPPFLAGS	= -std=c++11 -Wall `pkg-config --cflags gtkmm-3.0 opencv`
-LDFLAGS		= `pkg-config --libs gtkmm-3.0 opencv`
-SRCS		= main.cpp colorwindow.cpp
+CFLAGS		= -std=c++11 -Wall -march=native `pkg-config --cflags opencv`
+LINKFLAGS	= `pkg-config --libs opencv`
+SRCS		= main-hsv.cpp
 OBJS		= $(SRCS:.cpp=.o)
-PROG		= main.out
+PROG		= main-hsv.out
 
 all: $(SRCS) $(PROG)
 
 $(PROG): $(OBJS)
-	$(CC) $(CPPFLAGS) $(OBJS) -o $@ $(LDFLAGS)
+	$(CC) $(CFLAGS) $(OBJS) -o $@ $(INCFLAGS) $(LINKFLAGS)
 
 .cpp.o:
-	$(CC) $(CPPFLAGS) $< -c -o $@
+	$(CC) $(CFLAGS) $< -c -o $@ $(INCFLAGS)
 
 clean:
 	rm $(OBJS) $(PROG)
