@@ -40,9 +40,9 @@ Window* ColorWindow::create() {
 	scene->signal_size_allocate().connect(sigc::mem_fun(*this, &ColorWindow::onSceneSizeAllocate));
 	preProcessButton->signal_clicked().connect(sigc::mem_fun(*this, &ColorWindow::onPreProcessButtonClick));
 	pickMaterialButton->signal_toggled().connect(sigc::mem_fun(*this, &ColorWindow::onPickMaterialButtonToggle));
-	referColor->signal_color_set().connect(sigc::mem_fun(*this, &ColorWindow::onReferColorSet));
-	srcColor->signal_color_set().connect(sigc::mem_fun(*this, &ColorWindow::onSrcColorSet));
-	destColor->signal_color_set().connect(sigc::mem_fun(*this, &ColorWindow::onDestColorSet));
+	referColor->signal_color_set().connect(sigc::mem_fun(*this, &ColorWindow::onColorSet));
+	srcColor->signal_color_set().connect(sigc::mem_fun(*this, &ColorWindow::onColorSet));
+	destColor->signal_color_set().connect(sigc::mem_fun(*this, &ColorWindow::onColorSet));
 
 	return mainWindow;
 }
@@ -95,15 +95,21 @@ void ColorWindow::onSceneSizeAllocate(Allocation& allocation) {
 }
 
 void ColorWindow::onPreProcessButtonClick() {
-	cout << boost::format("onPreProcessButtonClick: sceneFile => %1%, depthFile => %2%") % sceneFile->get_filename() % depthFile->get_filename() << endl;
-
-	// ensure alpha and always rgba
-	srcPixbuf = Gdk::Pixbuf::create_from_file(sceneFile->get_filename())->add_alpha(false, 255, 255, 255);
-	destPixbuf = srcPixbuf->copy();
-	depthPixbuf = Gdk::Pixbuf::create_from_file(depthFile->get_filename())->add_alpha(false, 255, 255, 255);
-	scene->set(destPixbuf);
-
-	readMaterial();
+	try {
+		srcPixbuf = Gdk::Pixbuf::create_from_file(sceneFile->get_filename())->add_alpha(false, 255, 255, 255);
+		destPixbuf = srcPixbuf->copy();
+		depthPixbuf = Gdk::Pixbuf::create_from_file(depthFile->get_filename())->add_alpha(false, 255, 255, 255);
+		scene->set(destPixbuf);
+		readMaterial();
+	} catch (const FileError& e) {
+		MessageDialog dialog(*mainWindow, g_quark_to_string(e.domain()), false, MESSAGE_ERROR);
+		dialog.set_secondary_text(e.what());
+		dialog.run();
+	} catch (const Gdk::PixbufError& e) {
+		MessageDialog dialog(*mainWindow, g_quark_to_string(e.domain()), false, MESSAGE_ERROR);
+		dialog.set_secondary_text(e.what());
+		dialog.run();
+	}
 }
 
 void ColorWindow::onPickMaterialButtonToggle() {
@@ -114,17 +120,7 @@ void ColorWindow::onPickMaterialButtonToggle() {
 	}
 }
 
-void ColorWindow::onReferColorSet() {
-	cout << "onReferColorSet: " << referColor->get_rgba() << endl;
-}
-
-void ColorWindow::onSrcColorSet() {
-	cout << "onSrcColorSet: " << srcColor->get_rgba() << endl;
-}
-
-void ColorWindow::onDestColorSet() {
-	cout << "onDestColorSet: " << destColor->get_rgba() << endl;
-
+void ColorWindow::onColorSet() {
 	Gdk::RGBA referRGBA = referColor->get_rgba();
 	Gdk::RGBA srcRGBA = srcColor->get_rgba();
 	Gdk::RGBA destRGBA = destColor->get_rgba();
@@ -133,23 +129,10 @@ void ColorWindow::onDestColorSet() {
 	Vec3b srcRGB(srcRGBA.get_red() * COLOR_DEPTH, srcRGBA.get_green() * COLOR_DEPTH, srcRGBA.get_blue() * COLOR_DEPTH);
 	Vec3b destRGB(destRGBA.get_red() * COLOR_DEPTH, destRGBA.get_green() * COLOR_DEPTH, destRGBA.get_blue() * COLOR_DEPTH);
 
+	cout << boost::format("referColor: %1%, srcColor: %2%, destColor: %3%") % referRGB % srcRGB % destRGB << endl;
+
 	Vec3i diffRGB = diffHSV2RGB(referRGB, srcRGB, destRGB);
-
-	int width = srcPixbuf->get_width();
-	guint8* srcRaw = srcPixbuf->get_pixels();
-	guint8* destRaw = destPixbuf->get_pixels();
-
-	for (Point2i& point : material->region) {
-		int i = point.y * width * 4 + point.x * 4;
-
-		int newR = int(srcRaw[i    ]) + diffRGB[0];
-		int newG = int(srcRaw[i + 1]) + diffRGB[1];
-		int newB = int(srcRaw[i + 2]) + diffRGB[2];
-
-		destRaw[i    ] = saturate_cast<uchar>(newR);
-		destRaw[i + 1] = saturate_cast<uchar>(newG);
-		destRaw[i + 2] = saturate_cast<uchar>(newB);
-	}
+	applyDiffRGB(srcPixbuf, destPixbuf, material->region, diffRGB);
 
 	scene->set(destPixbuf);
 }

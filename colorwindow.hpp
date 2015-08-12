@@ -9,6 +9,7 @@
 #include <gtkmm/colorbutton.h>
 #include <gtkmm/togglebutton.h>
 #include <gtkmm/filechooserbutton.h>
+#include <gtkmm/messagedialog.h>
 #include <glibmm/fileutils.h>
 #include <opencv2/imgproc/imgproc.hpp>
 #include "material.hpp"
@@ -38,9 +39,7 @@ private:
 	void onSceneSizeAllocate(Allocation& allocation);
 	void onPreProcessButtonClick();
 	void onPickMaterialButtonToggle();
-	void onReferColorSet();
-	void onSrcColorSet();
-	void onDestColorSet();
+	void onColorSet();
 
 	//Widget pointer in the UI file
 	Window* mainWindow = NULL;
