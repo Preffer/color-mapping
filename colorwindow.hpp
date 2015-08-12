@@ -20,8 +20,8 @@ using namespace cv;
 
 static string ui_file = "colorwindow.glade";
 
-enum PickStatus {
-	ignore,
+enum class PickStatus {
+	sleep,
 	awake,
 	press
 };
@@ -35,7 +35,9 @@ private:
 	bool onScenePress(GdkEventButton* event);
 	bool onSceneRelease(GdkEventButton* event);
 	bool onSceneMotion(GdkEventMotion* event);
+	void onSceneSizeAllocate(Allocation& allocation);
 	void onPreProcessButtonClick();
+	void onPickMaterialButtonToggle();
 	void onReferColorSet();
 	void onSrcColorSet();
 	void onDestColorSet();
@@ -61,10 +63,12 @@ private:
 
 	// material related
 	vector<Material> library;
+	Material* material;
 	void readMaterial();
 
 	// pick status
 	PickStatus pick;
+	Point2i border;
 };
 
 #endif // _COLORWINDOW_HPP_

@@ -21,10 +21,10 @@ Vec3b HSV2RGB(Vec3b hsv) {
 	return m.at<Vec3b>(0, 0);
 }
 
-Vec3i diffHSV2RGB(Vec3b srcRGB, Vec3b destRGB, Vec3b referRGB) {
+Vec3i diffHSV2RGB( Vec3b referRGB, Vec3b srcRGB, Vec3b destRGB) {
+	Vec3b referHSV = RGB2HSV(referRGB);
 	Vec3b srcHSV = RGB2HSV(srcRGB);
 	Vec3b destHSV = RGB2HSV(destRGB);
-	Vec3b referHSV = RGB2HSV(referRGB);
 
 	Vec3i diffHSV = Vec3i(destHSV) - Vec3i(srcHSV);
 	Vec3i newHSV = Vec3i(referHSV) + diffHSV;
@@ -34,7 +34,7 @@ Vec3i diffHSV2RGB(Vec3b srcRGB, Vec3b destRGB, Vec3b referRGB) {
 	Vec3b newRGB = HSV2RGB(Vec3b(newHSV));
 	Vec3i diffRGB = Vec3i(newRGB) - Vec3i(referRGB);
 
-	cout << boost::format("srcRGB: %1%, srcHSV %2%, destRGB: %3%, destHSV: %4%, referRGB: %5%, referHSV: %6%, newRGB: %7%, newHSV: %8%, diffRGB: %9%, diffHSV: %10%") % srcRGB % srcHSV % destRGB % destHSV % referRGB % referHSV % newRGB % newHSV % diffRGB % diffHSV << endl;
+	cout << boost::format("referRGB: %1%, referHSV: %2%, srcRGB: %3%, srcHSV %4%, destRGB: %5%, destHSV: %6%, newRGB: %7%, newHSV: %8%, diffRGB: %9%, diffHSV: %10%") % referRGB % referHSV % srcRGB % srcHSV % destRGB % destHSV % newRGB % newHSV % diffRGB % diffHSV << endl;
 	return diffRGB;
 }
 

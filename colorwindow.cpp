@@ -37,7 +37,9 @@ Window* ColorWindow::create() {
 	sceneEventBox->signal_button_press_event().connect(sigc::mem_fun(*this, &ColorWindow::onScenePress));
 	sceneEventBox->signal_button_release_event().connect(sigc::mem_fun(*this, &ColorWindow::onSceneRelease));
 	sceneEventBox->signal_motion_notify_event().connect(sigc::mem_fun(*this, &ColorWindow::onSceneMotion));
+	scene->signal_size_allocate().connect(sigc::mem_fun(*this, &ColorWindow::onSceneSizeAllocate));
 	preProcessButton->signal_clicked().connect(sigc::mem_fun(*this, &ColorWindow::onPreProcessButtonClick));
+	pickMaterialButton->signal_toggled().connect(sigc::mem_fun(*this, &ColorWindow::onPickMaterialButtonToggle));
 	referColor->signal_color_set().connect(sigc::mem_fun(*this, &ColorWindow::onReferColorSet));
 	srcColor->signal_color_set().connect(sigc::mem_fun(*this, &ColorWindow::onSrcColorSet));
 	destColor->signal_color_set().connect(sigc::mem_fun(*this, &ColorWindow::onDestColorSet));
@@ -47,18 +49,49 @@ Window* ColorWindow::create() {
 
 /* Signal handler */
 bool ColorWindow::onScenePress(GdkEventButton* event) {
-	cout << boost::format("Press: (%1%, %2%)") % event->x % event->y << endl;
+	Point2i pos(event->x - border.x, event->y - border.y);
+	cout << boost::format("Press: %1%") % pos << endl;
+
+	guint8* depthRaw = depthPixbuf->get_pixels();
+
+	int index = pos.y * depthPixbuf->get_width() * 4 + pos.x * 4;
+	Vec3b diffuseColor(depthRaw[index], depthRaw[index + 1], depthRaw[index + 2]);
+
+	if (pos.x < srcPixbuf->get_width() && pos.y < srcPixbuf->get_height()) {
+		for (Material& m : library) {
+			if (diffuseColor == m.diffuseColor) {
+				material = &m;
+				break;
+			}
+		}
+		Gdk::RGBA diffuseRGBA;
+		diffuseRGBA.set_rgba_u(int(material->diffuseColor[0]) * COLOR_DEPTH, int(material->diffuseColor[1]) * COLOR_DEPTH, int(material->diffuseColor[2]) * COLOR_DEPTH);
+		srcColor->set_rgba(diffuseRGBA);
+
+		Gdk::RGBA renderRGBA;
+		renderRGBA.set_rgba_u(int(material->renderColor[0]) * COLOR_DEPTH, int(material->renderColor[1]) * COLOR_DEPTH, int(material->renderColor[2]) * COLOR_DEPTH);
+		referColor->set_rgba(renderRGBA);
+
+		cout << boost::format("srcColor: %1%, referColor: %2%") % material->diffuseColor % material->renderColor << endl;
+	}
 	return false;
 }
 
 bool ColorWindow::onSceneRelease(GdkEventButton* event) {
-	cout << boost::format("Release: (%1%, %2%)") % event->x % event->y << endl;
+	//cout << boost::format("Release: (%1%, %2%)") % event->x % event->y << endl;
 	return false;
 }
 
 bool ColorWindow::onSceneMotion(GdkEventMotion* event) {
-	cout << boost::format("Motion: (%1%, %2%)") % event->x % event->y << endl;
+	//cout << boost::format("Motion: (%1%, %2%)") % event->x % event->y << endl;
 	return false;
+}
+
+void ColorWindow::onSceneSizeAllocate(Allocation& allocation) {
+	if (srcPixbuf) {
+		border.x = (allocation.get_width()  - srcPixbuf->get_width())  / 2;
+		border.y = (allocation.get_height() - srcPixbuf->get_height()) / 2;
+	}
 }
 
 void ColorWindow::onPreProcessButtonClick() {
@@ -73,6 +106,14 @@ void ColorWindow::onPreProcessButtonClick() {
 	readMaterial();
 }
 
+void ColorWindow::onPickMaterialButtonToggle() {
+	if (pickMaterialButton->get_active()) {
+		pick = PickStatus::awake;
+	} else {
+		pick = PickStatus::sleep;
+	}
+}
+
 void ColorWindow::onReferColorSet() {
 	cout << "onReferColorSet: " << referColor->get_rgba() << endl;
 }
@@ -84,30 +125,33 @@ void ColorWindow::onSrcColorSet() {
 void ColorWindow::onDestColorSet() {
 	cout << "onDestColorSet: " << destColor->get_rgba() << endl;
 
-	/*Gdk::RGBA rgba = destColor->get_rgba();
+	Gdk::RGBA referRGBA = referColor->get_rgba();
+	Gdk::RGBA srcRGBA = srcColor->get_rgba();
+	Gdk::RGBA destRGBA = destColor->get_rgba();
 
-	Vec3b src(255, 255, 255);
-	Vec3b dest(rgba.get_red() * COLOR_DEPTH, rgba.get_green() * COLOR_DEPTH, rgba.get_blue() * COLOR_DEPTH);
-	Vec3b refer(174, 174, 174);
+	Vec3b referRGB(referRGBA.get_red() * COLOR_DEPTH, referRGBA.get_green() * COLOR_DEPTH, referRGBA.get_blue() * COLOR_DEPTH);
+	Vec3b srcRGB(srcRGBA.get_red() * COLOR_DEPTH, srcRGBA.get_green() * COLOR_DEPTH, srcRGBA.get_blue() * COLOR_DEPTH);
+	Vec3b destRGB(destRGBA.get_red() * COLOR_DEPTH, destRGBA.get_green() * COLOR_DEPTH, destRGBA.get_blue() * COLOR_DEPTH);
 
-	Vec3i diffRGB = diffHSV2RGB(src, dest, refer);
+	Vec3i diffRGB = diffHSV2RGB(referRGB, srcRGB, destRGB);
+
 	int width = srcPixbuf->get_width();
 	guint8* srcRaw = srcPixbuf->get_pixels();
 	guint8* destRaw = destPixbuf->get_pixels();
 
-	for (Point2i& point : material.second) {
+	for (Point2i& point : material->region) {
 		int i = point.y * width * 4 + point.x * 4;
 
-		int newR = int(srcRaw[i    ]) + diff[0];
-		int newG = int(srcRaw[i + 1]) + diff[1];
-		int newB = int(srcRaw[i + 2]) + diff[2];
+		int newR = int(srcRaw[i    ]) + diffRGB[0];
+		int newG = int(srcRaw[i + 1]) + diffRGB[1];
+		int newB = int(srcRaw[i + 2]) + diffRGB[2];
 
 		destRaw[i    ] = saturate_cast<uchar>(newR);
 		destRaw[i + 1] = saturate_cast<uchar>(newG);
 		destRaw[i + 2] = saturate_cast<uchar>(newB);
 	}
 
-	scene->set(destPixbuf);*/
+	scene->set(destPixbuf);
 }
 
 void ColorWindow::readMaterial() {

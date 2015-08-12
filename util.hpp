@@ -14,7 +14,7 @@ using namespace cv;
 const int COLOR_DEPTH = 255;
 
 ostream& operator<<(ostream& out, const Gdk::RGBA& rgba) {
-	return out << boost::format("[%1%, %2%, %3%, %4%]") % (rgba.get_red() * COLOR_DEPTH) % (rgba.get_green() * COLOR_DEPTH) % (rgba.get_blue() * COLOR_DEPTH) % (rgba.get_alpha() * COLOR_DEPTH);
+	return out << boost::format("[%1%, %2%, %3%, %4%]") % (rgba.get_red_u() / COLOR_DEPTH) % (rgba.get_green_u() / COLOR_DEPTH) % (rgba.get_blue_u() / COLOR_DEPTH) % (rgba.get_alpha_u() / COLOR_DEPTH);
 }
 
 ostream& operator<<(ostream& out, const vector<Point2i>& r) {
