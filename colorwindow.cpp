@@ -69,9 +69,10 @@ bool ColorWindow::onSceneMotion(GdkEventMotion* event) {
 		int width = depthPixbuf->get_width();
 		int height = depthPixbuf->get_height();
 
-		if (point.x < width && point.y < height) {
+		if (point.x > 0 && point.x < width && point.y > 0 && point.y < height) {
 			int channel = depthPixbuf->get_n_channels();
-			int index = point.y * depthPixbuf->get_width() * channel + point.x * channel;
+			int index = point.y * width * channel + point.x * channel;
+
 			guint8* depthRaw = depthPixbuf->get_pixels();
 			Vec3b diffuseColor(depthRaw[index], depthRaw[index + 1], depthRaw[index + 2]);
 
@@ -110,7 +111,6 @@ void ColorWindow::onSceneSizeAllocate(Allocation& allocation) {
 void ColorWindow::onPreProcessButtonClick() {
 	try {
 		srcPixbuf = Gdk::Pixbuf::create_from_file(sceneFile->get_filename());
-		destPixbuf = srcPixbuf->copy();
 		depthPixbuf = Gdk::Pixbuf::create_from_file(depthFile->get_filename());
 
 		if (srcPixbuf->get_width() != depthPixbuf->get_width() || srcPixbuf->get_height() != depthPixbuf->get_height()) {
@@ -120,7 +120,9 @@ void ColorWindow::onPreProcessButtonClick() {
 			return;
 		}
 
+		destPixbuf = srcPixbuf->copy();
 		scene->set(destPixbuf);
+
 		readMaterial();
 	} catch (const FileError& e) {
 		MessageDialog dialog(*mainWindow, g_quark_to_string(e.domain()), false, MESSAGE_ERROR);
