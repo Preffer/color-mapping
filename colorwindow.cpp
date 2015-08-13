@@ -43,6 +43,8 @@ Window* ColorWindow::create() {
 	referColor->signal_color_set().connect(sigc::mem_fun(*this, &ColorWindow::onColorSet));
 	srcColor->signal_color_set().connect(sigc::mem_fun(*this, &ColorWindow::onColorSet));
 	destColor->signal_color_set().connect(sigc::mem_fun(*this, &ColorWindow::onColorSet));
+	originButton->signal_toggled().connect(sigc::mem_fun(*this, &ColorWindow::onOriginButtonToggle));
+	saveButton->signal_clicked().connect(sigc::mem_fun(*this, &ColorWindow::onSaveButtonClick));
 
 	return mainWindow;
 }
@@ -180,6 +182,43 @@ void ColorWindow::onColorSet() {
 	applyDiffRGB(srcPixbuf, destPixbuf, material->region, diffRGB);
 
 	scene->set(destPixbuf);
+}
+
+void ColorWindow::onOriginButtonToggle() {
+	if (originButton->get_active()) {
+		scene->set(srcPixbuf);
+	} else {
+		scene->set(destPixbuf);
+	}
+}
+
+void ColorWindow::onSaveButtonClick() {
+	if (destPixbuf) {
+		FileChooserDialog dialog(*mainWindow, "Select save file", FileChooserAction::FILE_CHOOSER_ACTION_SAVE);
+		dialog.add_button("Save", 1);
+		dialog.run();
+
+		string filename = dialog.get_filename();
+		string extname = filename.substr(filename.rfind('.') + 1);
+
+		if (filename.size() && extname.size()) {
+			try {
+				destPixbuf->save(filename, extname);
+			} catch (const FileError& e) {
+				MessageDialog dialog(*mainWindow, g_quark_to_string(e.domain()), false, MESSAGE_ERROR);
+				dialog.set_secondary_text(e.what());
+				dialog.run();
+			} catch (const Gdk::PixbufError& e) {
+				MessageDialog dialog(*mainWindow, g_quark_to_string(e.domain()), false, MESSAGE_ERROR);
+				dialog.set_secondary_text(e.what());
+				dialog.run();
+			}
+		}
+	} else {
+		MessageDialog dialog(*mainWindow, "PreProcess image first", false, MESSAGE_ERROR);
+		dialog.set_secondary_text("PreProcess image first");
+		dialog.run();
+	}
 }
 
 void ColorWindow::readMaterial() {

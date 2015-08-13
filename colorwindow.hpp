@@ -40,6 +40,10 @@ private:
 	void onPreProcessButtonClick();
 	void onPickMaterialButtonToggle();
 	void onColorSet();
+	void onOriginButtonToggle();
+	void onSaveButtonClick();
+
+	// PreProcess
 	void readMaterial();
 
 	//Widget pointer in the UI file
