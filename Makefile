@@ -1,9 +1,9 @@
 CC			= g++
 CFLAGS		= -std=c++11 -Wall -march=native `pkg-config --cflags opencv`
 LINKFLAGS	= `pkg-config --libs opencv`
-SRCS		= main-hsv.cpp
+SRCS		= main-lab.cpp
 OBJS		= $(SRCS:.cpp=.o)
-PROG		= main-hsv.out
+PROG		= main-lab.out
 
 all: $(SRCS) $(PROG)
 
